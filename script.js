@@ -8,7 +8,7 @@ const pieces = {
   pawn: "♟",
 };
 
-// Initial board setup
+// Configuración inicial del tablero
 const initialBoard = [
   ["rook", "knight", "bishop", "queen", "king", "bishop", "knight", "rook"],
   ["pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn"],
@@ -33,8 +33,9 @@ const colors = [
 
 let selectedPiece = null;
 let selectedPosition = null;
+let turn = "white"; // Comienza el turno del jugador
 
-// Create the board
+// Crear el tablero
 function createBoard() {
   chessboard.innerHTML = "";
   for (let row = 0; row < 8; row++) {
@@ -61,10 +62,12 @@ function createBoard() {
 }
 
 function onSquareClick(row, col) {
-  if (selectedPiece) {
-    movePiece(row, col);
-  } else {
-    selectPiece(row, col);
+  if (turn === "white") {
+    if (selectedPiece) {
+      movePiece(row, col);
+    } else {
+      selectPiece(row, col);
+    }
   }
 }
 
@@ -74,7 +77,7 @@ function selectPiece(row, col) {
   if (piece && color === "white") {
     selectedPiece = { piece, color, row, col };
     selectedPosition = { row, col };
-    console.log(`Selected ${piece} at (${row}, ${col})`);
+    console.log(`Seleccionaste ${piece} en (${row}, ${col})`);
   }
 }
 
@@ -88,8 +91,57 @@ function movePiece(row, col) {
 
     selectedPiece = null;
     selectedPosition = null;
+    turn = "black";
     createBoard();
+    setTimeout(cpuMove, 1000); // La CPU se mueve después de 1 segundo
   }
+}
+
+function cpuMove() {
+  const moves = getValidMoves("black");
+  if (moves.length > 0) {
+    const randomMove = moves[Math.floor(Math.random() * moves.length)];
+    const { fromRow, fromCol, toRow, toCol } = randomMove;
+
+    const piece = initialBoard[fromRow][fromCol];
+    initialBoard[fromRow][fromCol] = null;
+    initialBoard[toRow][toCol] = piece;
+    colors[fromRow][fromCol] = null;
+    colors[toRow][toCol] = "black";
+
+    console.log(`La CPU movió ${piece} de (${fromRow}, ${fromCol}) a (${toRow}, ${toCol})`);
+    createBoard();
+    turn = "white";
+  }
+}
+
+function getValidMoves(color) {
+  const moves = [];
+  for (let row = 0; row < 8; row++) {
+    for (let col = 0; col < 8; col++) {
+      if (colors[row][col] === color) {
+        const piece = initialBoard[row][col];
+        const validMoves = getPieceMoves(piece, row, col);
+        validMoves.forEach(({ toRow, toCol }) => {
+          moves.push({ fromRow: row, fromCol: col, toRow, toCol });
+        });
+      }
+    }
+  }
+  return moves;
+}
+
+function getPieceMoves(piece, row, col) {
+  // Lógica básica de movimientos (solo ejemplo, sin reglas estrictas)
+  const moves = [];
+  if (piece === "pawn") {
+    const direction = colors[row][col] === "white" ? -1 : 1;
+    if (initialBoard[row + direction] && !initialBoard[row + direction][col]) {
+      moves.push({ toRow: row + direction, toCol: col });
+    }
+  }
+  // Se pueden añadir más reglas para otras piezas aquí.
+  return moves;
 }
 
 createBoard();
